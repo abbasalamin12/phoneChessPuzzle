@@ -11,12 +11,14 @@ class ChessPiece:
         self.canOnlyMoveUp = canOnlyMoveUp # this is relevant for pawn pieces which can only move upwards
 
     def calculateStraightSpaces(self, board, startingPos):
+        """ Returns a set of available spaces that a piece can move to straightly. This includes spaces that are directly up/down/left/right """
         availableSpaces = set()
 
         xPos = startingPos[0]
         yPos = startingPos[1]
 
         for potentialXCoord in board.getRange(self.firstMoveRange, xPos, "horizontal"):
+            print(potentialXCoord)
             if(potentialXCoord != xPos):
                 if(board.isSquareValid( (potentialXCoord, yPos) )): # if the new square is valid, add it to the available spaces
                     availableSpaces.add( (potentialXCoord, yPos) )
@@ -30,8 +32,43 @@ class ChessPiece:
 
 
     def calculateDiagonalSpaces(self, board, startingPos):
-        #TODO
+        """ Returns a set of available spaces that a piece can move to diagonally. This includes spaces that are north-east, north-west, south-east, and south-west """
         availableSpaces = set()
+
+        xPos = startingPos[0]
+        yPos = startingPos[1]
+
+        xRange = board.getRange(self.firstMoveRange, xPos, "horizontal")
+        xMax = max(xRange)
+        xMin = min(xRange)
+        
+        yRange = board.getRange(self.firstMoveRange, yPos, "vertical")
+        yMax = max(yRange)
+        yMin = min(yRange)
+
+        # north-east squares (add 1 to x and y)
+        for count, potentialXCoord in enumerate(range(xPos+1, xMax+1)):
+            if(yPos+count+1 <= yMax):
+                availableSpaces.add((potentialXCoord, yPos+count+1))
+
+        # # south-west squares (subtract 1 from x and y)
+        for count, potentialXCoord in enumerate(range(xPos-1, xMin-1, -1)):
+            if(yPos-count >= yMin):
+                availableSpaces.add((potentialXCoord, yPos-count-1))
+
+        # # north-west squares (subtract 1 from x and add 1 to y)
+        for count, potentialXCoord in enumerate(range(xPos-1, xMin-1, -1)):
+            if(yPos+count+1 <= yMax):
+                availableSpaces.add((potentialXCoord, yPos+count+1))
+
+        # south-east squares (add 1 to x and subtract 1 to y)
+        for count, potentialXCoord in enumerate(range(xPos+1, xMax+1)):
+            print(potentialXCoord)
+            if(yPos-count >= yMin):
+                availableSpaces.add((potentialXCoord, yPos-count-1))
+
+        return availableSpaces
+
 
     def calculateAvailableMoves(self, board, startingPos):
         #TODO
@@ -138,4 +175,5 @@ print(phoneBoard)
 # print(phoneBoard.getInvalidSquareValues())
 # print(phoneBoard.getLocationValue((0, 1)))
 
-print(king.calculateStraightSpaces(phoneBoard, (0,0)))
+# print(king.calculateStraightSpaces(phoneBoard, (1,2)))
+print(queen.calculateDiagonalSpaces(phoneBoard, (1,2)))
