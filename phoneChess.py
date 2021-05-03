@@ -1,16 +1,17 @@
 from math import inf as inf
 
 class ChessPiece:
-    def __init__(self, name, firstMoveRange, canMoveDiagonally, canMoveStraight, canOnlyMoveUp=False):
+    def __init__(self, name, firstMoveRange, secondMoveRange, canMoveDiagonally, canMoveStraight, canMoveInLShape, canOnlyMoveUp=False):
         """ Initialises a chess piece object that has its own movement rules """
         self.name = name
         self.firstMoveRange = firstMoveRange # every piece gets a first move
-        # self.secondMoveRange = secondMoveRange # this is only relavant for the knight piece, which moves 2 spaces in one direction, then 1 space in another direction
+        self.secondMoveRange = secondMoveRange # this is only relavant for the knight piece, which moves 2 spaces in one direction, then 1 space in another direction
         self.canMoveDiagonally = canMoveDiagonally
         self.canMoveStraight = canMoveStraight
+        self.canMoveInLShape = canMoveInLShape # this is only relavant for the knight piece, which moves 2 spaces in one direction, then 1 space in another direction
         self.canOnlyMoveUp = canOnlyMoveUp # this is relevant for pawn pieces which can only move upwards
 
-    def calculateStraightSpaces(self, board, movementRange, startingPos):
+    def calculateStraightSpaces(self, board, startingPos):
         """ Returns a set of available spaces that a piece can move to straightly. This includes spaces that are directly up/down/left/right """
         availableSpaces = set()
 
@@ -37,7 +38,7 @@ class ChessPiece:
 
         return availableSpaces
 
-    def calculateDiagonalSpaces(self, board, movementRange, startingPos):
+    def calculateDiagonalSpaces(self, board, startingPos):
         """ Returns a set of available spaces that a piece can move to diagonally. This includes spaces that are north-east, north-west, south-east, and south-west """
         availableSpaces = set()
 
@@ -83,22 +84,52 @@ class ChessPiece:
 
         return availableSpaces
 
+    def calculateLShapeSpaces(self, board, startingPos):
+        """ Returns a set of available spaces that a piece can move to using L shapes """
+        availableSpaces = set()
+
+        xPos = startingPos[0]
+        yPos = startingPos[1]
+
+        if(not (xPos<board.horizontalSize and xPos>=0)):
+            raise IndexError("The coordinates must be in range")
+        if(not (yPos<board.verticalSize and yPos>=0)):
+            raise IndexError("The coordinates must be in range")
+
+        potentialCoordinates = []      
+
+        potentialCoordinates.append((xPos+self.firstMoveRange, yPos+self.secondMoveRange)) # right, down
+        potentialCoordinates.append((xPos+self.firstMoveRange, yPos-self.secondMoveRange)) # right, up
+        potentialCoordinates.append((xPos-self.firstMoveRange, yPos+self.secondMoveRange)) # left, down
+        potentialCoordinates.append((xPos-self.firstMoveRange, yPos-self.secondMoveRange)) # left, up
+        potentialCoordinates.append((xPos+self.secondMoveRange, yPos+self.firstMoveRange)) # up, right
+        potentialCoordinates.append((xPos-self.secondMoveRange, yPos+self.firstMoveRange)) # up, left
+        potentialCoordinates.append((xPos+self.secondMoveRange, yPos-self.firstMoveRange)) # down, right
+        potentialCoordinates.append((xPos-self.secondMoveRange, yPos-self.firstMoveRange)) # down, left
+
+        for potentialCoordinate in potentialCoordinates:
+            if(board.isSquareValid(potentialCoordinate)):
+                availableSpaces.add(potentialCoordinate)
+
+        return availableSpaces
 
     def calculateAvailableMoves(self, board, startingPos):
         availableSpaces = set()
 
         if(self.canMoveStraight):
-            for move in self.calculateStraightSpaces(board, self.firstMoveRange, startingPos):
+            for move in self.calculateStraightSpaces(board, startingPos):
                 availableSpaces.add(move)
 
         if(self.canMoveDiagonally):
-            for move in self.calculateDiagonalSpaces(board, self.firstMoveRange, startingPos):
+            for move in self.calculateDiagonalSpaces(board, startingPos):
+                availableSpaces.add(move)
+        
+        if(self.canMoveInLShape):
+            for move in self.calculateLShapeSpaces(board, startingPos):
                 availableSpaces.add(move)
 
         return availableSpaces
         
-
-
 class Board:
     def __init__(self, horizontalSize, verticalSize):
         """ Initialises a board object with a default 2d array """
@@ -106,17 +137,17 @@ class Board:
         self.verticalSize = verticalSize
         self.board = [[x for x in range(horizontalSize)] for y in range(verticalSize)] # creates a 2d array to represent the board
 
-        self.invalidSquares = []
+        self.invalidSquares = set()
     
     def setRow(self, selectedRow, newRow):
         """ Used to set a row to a custom value, for when the default is not appropriate """
-        if(selectedRow>=0 and selectedRow<=self.verticalSize-1):
+        if(selectedRow>=0 and selectedRow<self.verticalSize):
             self.board[selectedRow] = newRow
 
     def setInvalidSquare(self, pos):
         """ This marks a square on the board as invalid, so no pieces can go on it """
-        if(pos[0] < self.horizontalSize and pos[0] >= 0  and pos[1] < self.verticalSize and pos[1] >= 0):
-            self.invalidSquares.append(pos)
+        if(pos[0] < self.horizontalSize and pos[0] >= 0  and pos[1] < self.verticalSize and pos[1] >= 0): # if the square is within range, add it to the list
+            self.invalidSquares.add(pos)
         else:
             raise IndexError("The coordinates must be in range")
 
@@ -129,7 +160,9 @@ class Board:
 
     def isSquareValid(self, pos):
         """ Returns true if the given coordinates are for a valid square, otherwise it returns false """
-        if(pos in self.invalidSquares):
+        if(pos in self.invalidSquares): # if the square has been manually marked as invalid
+            return False
+        elif( not (pos[0] < self.horizontalSize and pos[0] >= 0  and pos[1] < self.verticalSize and pos[1] >= 0)): # if the square is out of range
             return False
         else:
             return True
@@ -179,12 +212,12 @@ class Board:
         return viewableBoard
 
     
-king = ChessPiece("King", 1, True, True)
-queen = ChessPiece("Queen", inf, True, True)
-bishop = ChessPiece("Bishop", inf, True, False)
-rook = ChessPiece("Rook", inf, False, True)
+king = ChessPiece("King", 1, 0, True, True, False)
+queen = ChessPiece("Queen", inf, 0, True, True, False)
+bishop = ChessPiece("Bishop", inf, 0, True, False, False)
+rook = ChessPiece("Rook", inf, 0, False, True, False)
 
-knight = ChessPiece("Knight", 1, False, True) # solve this, i have scrapped the second move thing, need to do L moves instead maybe
+knight = ChessPiece("Knight", 2, 1, False, False, True)
 
 
 phoneBoard = Board(3, 4)
@@ -198,11 +231,11 @@ phoneBoard.setInvalidSquare((2, 0)) # sets the '#' square as invalid
 print(phoneBoard)
 
 
-# print("Available King moves from 5 square: ")
-# print(king.calculateAvailableMoves(phoneBoard, (1,2)))
+print("Available King moves from 5 square: ")
+print(king.calculateAvailableMoves(phoneBoard, (1,2)))
 
-# print("Available Queen moves from 3 square: ")
-# print(queen.calculateAvailableMoves(phoneBoard, (2,3)))
+print("Available Queen moves from 3 square: ")
+print(queen.calculateAvailableMoves(phoneBoard, (2,3)))
 
 print("Available Knight moves from 3 square: ")
 print(knight.calculateAvailableMoves(phoneBoard, (2,3)))
