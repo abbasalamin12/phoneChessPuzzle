@@ -1,42 +1,53 @@
 from math import inf as inf
 
 class ChessPiece:
-    def __init__(self, name, firstMoveRange, secondMoveRange, canMoveDiagonally, canMoveStraight, canOnlyMoveUp=False):
+    def __init__(self, name, firstMoveRange, canMoveDiagonally, canMoveStraight, canOnlyMoveUp=False):
         """ Initialises a chess piece object that has its own movement rules """
         self.name = name
         self.firstMoveRange = firstMoveRange # every piece gets a first move
-        self.secondMoveRange = secondMoveRange # this is only relavant for the knight piece, which moves 2 spaces in one direction, then 1 space in another direction
+        # self.secondMoveRange = secondMoveRange # this is only relavant for the knight piece, which moves 2 spaces in one direction, then 1 space in another direction
         self.canMoveDiagonally = canMoveDiagonally
         self.canMoveStraight = canMoveStraight
         self.canOnlyMoveUp = canOnlyMoveUp # this is relevant for pawn pieces which can only move upwards
 
-    def calculateStraightSpaces(self, board, startingPos):
+    def calculateStraightSpaces(self, board, movementRange, startingPos):
         """ Returns a set of available spaces that a piece can move to straightly. This includes spaces that are directly up/down/left/right """
         availableSpaces = set()
 
         xPos = startingPos[0]
         yPos = startingPos[1]
 
-        for potentialXCoord in board.getRange(self.firstMoveRange, xPos, "horizontal"):
-            print(potentialXCoord)
+        if(not (xPos<board.horizontalSize and xPos>=0)):
+            raise IndexError("The coordinates must be in range")
+        if(not (yPos<board.verticalSize and yPos>=0)):
+            raise IndexError("The coordinates must be in range")
+
+        xRange = board.getRange(self.firstMoveRange, xPos, "horizontal")
+        yRange = board.getRange(self.firstMoveRange, yPos, "vertical")
+
+        for potentialXCoord in xRange:
             if(potentialXCoord != xPos):
                 if(board.isSquareValid( (potentialXCoord, yPos) )): # if the new square is valid, add it to the available spaces
                     availableSpaces.add( (potentialXCoord, yPos) )
 
-        for potentialYCoord in board.getRange(self.firstMoveRange, yPos, "vertical"):
+        for potentialYCoord in yRange:
             if(potentialYCoord != yPos):
                 if(board.isSquareValid( (xPos, potentialYCoord) )): # if the new square is valid, add it to the available spaces
                     availableSpaces.add( (xPos, potentialYCoord) )
 
         return availableSpaces
 
-
-    def calculateDiagonalSpaces(self, board, startingPos):
+    def calculateDiagonalSpaces(self, board, movementRange, startingPos):
         """ Returns a set of available spaces that a piece can move to diagonally. This includes spaces that are north-east, north-west, south-east, and south-west """
         availableSpaces = set()
 
         xPos = startingPos[0]
         yPos = startingPos[1]
+
+        if(not (xPos<board.horizontalSize and xPos>=0)):
+            raise IndexError("The coordinates must be in range")
+        if(not (yPos<board.verticalSize and yPos>=0)):
+            raise IndexError("The coordinates must be in range")
 
         xRange = board.getRange(self.firstMoveRange, xPos, "horizontal")
         xMax = max(xRange)
@@ -47,32 +58,45 @@ class ChessPiece:
         yMin = min(yRange)
 
         # north-east squares (add 1 to x and y)
-        for count, potentialXCoord in enumerate(range(xPos+1, xMax+1)):
+        for count, potentialXCoord in enumerate(range(xPos+1, xMax+1)):            
             if(yPos+count+1 <= yMax):
-                availableSpaces.add((potentialXCoord, yPos+count+1))
+                if(board.isSquareValid((potentialXCoord, yPos+count+1))):
+                    availableSpaces.add((potentialXCoord, yPos+count+1))
 
         # # south-west squares (subtract 1 from x and y)
         for count, potentialXCoord in enumerate(range(xPos-1, xMin-1, -1)):
-            if(yPos-count >= yMin):
-                availableSpaces.add((potentialXCoord, yPos-count-1))
+            if(yPos-count-1 >= yMin):
+                if(board.isSquareValid((potentialXCoord, yPos-count-1))):
+                    availableSpaces.add((potentialXCoord, yPos-count-1))
 
         # # north-west squares (subtract 1 from x and add 1 to y)
         for count, potentialXCoord in enumerate(range(xPos-1, xMin-1, -1)):
             if(yPos+count+1 <= yMax):
-                availableSpaces.add((potentialXCoord, yPos+count+1))
+                if(board.isSquareValid((potentialXCoord, yPos+count+1))):
+                    availableSpaces.add((potentialXCoord, yPos+count+1))
 
         # south-east squares (add 1 to x and subtract 1 to y)
         for count, potentialXCoord in enumerate(range(xPos+1, xMax+1)):
-            print(potentialXCoord)
-            if(yPos-count >= yMin):
-                availableSpaces.add((potentialXCoord, yPos-count-1))
+            if(yPos-count-1 >= yMin):
+                if(board.isSquareValid((potentialXCoord, yPos-count-1))):
+                    availableSpaces.add((potentialXCoord, yPos-count-1))
 
         return availableSpaces
 
 
     def calculateAvailableMoves(self, board, startingPos):
-        #TODO
         availableSpaces = set()
+
+        if(self.canMoveStraight):
+            for move in self.calculateStraightSpaces(board, self.firstMoveRange, startingPos):
+                availableSpaces.add(move)
+
+        if(self.canMoveDiagonally):
+            for move in self.calculateDiagonalSpaces(board, self.firstMoveRange, startingPos):
+                availableSpaces.add(move)
+
+        return availableSpaces
+        
 
 
 class Board:
@@ -119,12 +143,12 @@ class Board:
                 return range(0, self.horizontalSize)
         else:
             if(direction=="vertical"):
-                if(currentPos+movementRange > self.verticalSize):
+                if(currentPos+movementRange >= self.verticalSize):
                     rangeMax = self.verticalSize
                 else:
                     rangeMax = currentPos+movementRange+1
             elif(direction=="horizontal"):
-                if(currentPos+movementRange > self.horizontalSize):
+                if(currentPos+movementRange >= self.horizontalSize):
                     rangeMax = self.horizontalSize
                 else:
                     rangeMax = currentPos+movementRange+1
@@ -155,11 +179,12 @@ class Board:
         return viewableBoard
 
     
-king = ChessPiece("King", 1, 0, True, True)
-queen = ChessPiece("Queen", inf, 0, True, True)
-bishop = ChessPiece("Bishop", inf, 0, True, False)
-rook = ChessPiece("Rook", inf, 0, False, True)
-knight = ChessPiece("Knight", 2, 1, False, True)
+king = ChessPiece("King", 1, True, True)
+queen = ChessPiece("Queen", inf, True, True)
+bishop = ChessPiece("Bishop", inf, True, False)
+rook = ChessPiece("Rook", inf, False, True)
+
+knight = ChessPiece("Knight", 1, False, True) # solve this, i have scrapped the second move thing, need to do L moves instead maybe
 
 
 phoneBoard = Board(3, 4)
@@ -172,8 +197,12 @@ phoneBoard.setInvalidSquare((0, 0)) # sets the '*' square as invalid
 phoneBoard.setInvalidSquare((2, 0)) # sets the '#' square as invalid
 print(phoneBoard)
 
-# print(phoneBoard.getInvalidSquareValues())
-# print(phoneBoard.getLocationValue((0, 1)))
 
-# print(king.calculateStraightSpaces(phoneBoard, (1,2)))
-print(queen.calculateDiagonalSpaces(phoneBoard, (1,2)))
+# print("Available King moves from 5 square: ")
+# print(king.calculateAvailableMoves(phoneBoard, (1,2)))
+
+# print("Available Queen moves from 3 square: ")
+# print(queen.calculateAvailableMoves(phoneBoard, (2,3)))
+
+print("Available Knight moves from 3 square: ")
+print(knight.calculateAvailableMoves(phoneBoard, (2,3)))
