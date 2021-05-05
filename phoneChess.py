@@ -75,15 +75,30 @@ class ChessPiece:
         return availableSpaces
 
     def calculateAvailableMoves(self, board, startingPos):
-        availableSpaces = set()
+        """ Calculates possible moves that can be made for a given piece, and starting position, and returns a set of possiblities """
+        availableSpaces = []
 
         for move in self.calculateStraightSpaces(board, startingPos):
-            availableSpaces.add(move)
+            availableSpaces.append(move)
 
         for move in self.calculateDiagonalSpaces(board, startingPos):
-            availableSpaces.add(move)
+            availableSpaces.append(move)
 
         return availableSpaces
+
+    def calculateValidNumbers(self, board, startingPos, currentPath="", validNumbers=set() ):
+        """ Calculates valid phone numbers that can be made with the chess piece, and returns a list """
+
+        currentPath += board.getLocationValue(startingPos) # add the current position as the next character in the phone number
+        for availableMove in self.calculateAvailableMoves(board, startingPos):
+            if(len(currentPath) < 7):
+                self.calculateValidNumbers(board, availableMove, currentPath, validNumbers)
+            else: # if the current path is already 7 digits long, break out of the current loop, and add the number to the set
+                validNumbers.add(currentPath)
+                break
+        
+        return validNumbers
+        
 
 class King(ChessPiece):
     def __init__(self, name):
@@ -195,8 +210,6 @@ class Pawn(ChessPiece):
         return availableSpaces
             
 
-    
-
 class Board:
     def __init__(self, horizontalSize, verticalSize):
         """ Initialises a board object with a default 2d array """
@@ -263,7 +276,7 @@ class Board:
     def getLocationValue(self, pos):
         """ Takes a tuple that represents coordinates and returns whats on those coordinates """
         if(pos[0] < self.horizontalSize and pos[0] >= 0  and pos[1] < self.verticalSize and pos[1] >= 0):
-            return self.board[self.verticalSize-1-pos[1]][pos[0]]
+            return str(self.board[self.verticalSize-1-pos[1]][pos[0]])
         else:
             raise IndexError("The coordinates must be in range")
 
@@ -276,7 +289,6 @@ class Board:
             viewableBoard += "\n"
         return viewableBoard
 
-    
 king = King("King")
 queen = Queen("Queen")
 bishop = Bishop("Bishop")
@@ -296,20 +308,26 @@ phoneBoard.setInvalidSquare((2, 0)) # sets the '#' square as invalid
 print(phoneBoard)
 
 
-print("Available King moves from 5 square: ")
-print(king.calculateAvailableMoves(phoneBoard, (1,2)))
+# print("Available King moves from 5 square: ")
+# print(king.calculateAvailableMoves(phoneBoard, (1,2)))
 
-print("Available Queen moves from 3 square: ")
-print(queen.calculateAvailableMoves(phoneBoard, (2,3)))
+# print("Available Queen moves from 3 square: ")
+# print(queen.calculateAvailableMoves(phoneBoard, (2,3)))
 
-print("Available Bishop moves from 3 square: ")
-print(bishop.calculateAvailableMoves(phoneBoard, (2,3)))
+# print("Available Bishop moves from 3 square: ")
+# print(bishop.calculateAvailableMoves(phoneBoard, (2,3)))
 
-print("Available Rook moves from 3 square: ")
-print(rook.calculateAvailableMoves(phoneBoard, (2,3)))
+# print("Available Rook moves from 3 square: ")
+# print(rook.calculateAvailableMoves(phoneBoard, (2,3)))
 
-print("Available Knight moves from 3 square: ")
-print(knight.calculateAvailableMoves(phoneBoard, (0,1)))
+# print("Available Knight moves from 3 square: ")
+# print(knight.calculateAvailableMoves(phoneBoard, (0,1)))
 
-print("Available Pawn moves from 0 square: ")
-print(pawn.calculateAvailableMoves(phoneBoard, (1,0)))
+# print("Available Pawn moves from 0 square: ")
+# print(pawn.calculateAvailableMoves(phoneBoard, (1,0)))
+
+validKingNumbers = king.calculateValidNumbers(phoneBoard, (1,2))
+for count, i in enumerate(validKingNumbers):
+    print(i)
+    if count > 30:
+        break
