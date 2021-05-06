@@ -86,8 +86,11 @@ class ChessPiece:
 
         return availableSpaces
 
-    def calculateValidNumbers(self, board, startingPos, currentPath="", validNumbers=set() ):
-        """ Calculates valid phone numbers that can be made with the chess piece, and returns a list """
+    def calculateValidNumbers(self, board, startingPos, currentPath="", validNumbers=None):
+        """ Calculates valid phone numbers that can be made with the chess piece, with a given starting point, and returns a set """
+
+        if validNumbers is None: # makes sure the validNumbers set is reset for the next call
+            validNumbers = set()
 
         currentPath += board.getLocationValue(startingPos) # add the current position as the next character in the phone number
         for availableMove in self.calculateAvailableMoves(board, startingPos):
@@ -98,7 +101,19 @@ class ChessPiece:
                 break
         
         return validNumbers
+
+    def calculateAllValidNumbers(self, board, startingLocations):
+        """ Calculates every possible valid phone number, from every valid starting point given, and returns the amount of valid numbers, and the sets of valid numbers """
+        validNumberSets = [] # stores a list, of sets of valid numbers for each starting location
+        for location in startingLocations:
+            validNumberSets.append(self.calculateValidNumbers(board, location))
+
+        validNumbersCount = 0
+        for validNumberSet in validNumberSets:
+            validNumbersCount += len(validNumberSet)
         
+        return validNumbersCount, validNumberSets     
+
 
 class King(ChessPiece):
     def __init__(self, name):
@@ -208,6 +223,24 @@ class Pawn(ChessPiece):
             availableSpaces.add(move)
 
         return availableSpaces
+
+    def calculateValidNumbers(self, board, startingPos, currentPath="", validNumbers=set() ):
+        """ Calculates valid phone numbers that can be made with the chess piece, with a given starting point, and returns a set """
+
+        currentPath += board.getLocationValue(startingPos) # add the current position as the next character in the phone number
+        for count, availableMove in enumerate(self.calculateAvailableMoves(board, startingPos)):
+            if(count>0):
+                self.madeFirstMove = True
+            else:
+                self.madeFirstMove = False
+
+            if(len(currentPath) < 7):
+                self.calculateValidNumbers(board, availableMove, currentPath, validNumbers)
+            else: # if the current path is already 7 digits long, break out of the current loop, and add the number to the set
+                validNumbers.add(currentPath)
+                break
+        
+        return validNumbers
             
 
 class Board:
@@ -311,14 +344,14 @@ print(phoneBoard)
 # print("Available King moves from 5 square: ")
 # print(king.calculateAvailableMoves(phoneBoard, (1,2)))
 
-# print("Available Queen moves from 3 square: ")
-# print(queen.calculateAvailableMoves(phoneBoard, (2,3)))
+# print("Available Queen moves from 5 square: ")
+# print(queen.calculateAvailableMoves(phoneBoard, (1,2)))
 
 # print("Available Bishop moves from 3 square: ")
 # print(bishop.calculateAvailableMoves(phoneBoard, (2,3)))
 
-# print("Available Rook moves from 3 square: ")
-# print(rook.calculateAvailableMoves(phoneBoard, (2,3)))
+# print("Available Rook moves from 5 square: ")
+# print(rook.calculateAvailableMoves(phoneBoard, (1,2)))
 
 # print("Available Knight moves from 3 square: ")
 # print(knight.calculateAvailableMoves(phoneBoard, (0,1)))
@@ -326,8 +359,17 @@ print(phoneBoard)
 # print("Available Pawn moves from 0 square: ")
 # print(pawn.calculateAvailableMoves(phoneBoard, (1,0)))
 
-validKingNumbers = king.calculateValidNumbers(phoneBoard, (1,2))
-for count, i in enumerate(validKingNumbers):
-    print(i)
-    if count > 30:
-        break
+
+
+validStartingLocations = [(1,3), (2,3), (0,2), (1,2), (2,2), (0,1), (0,2), (2,1)] # numbers 2-9 inclusive on the phone board
+
+# for startingLocation in validStartingLocations:
+#     print("Rook:", phoneBoard.getLocationValue(startingLocation), rook.calculateAvailableMoves(phoneBoard, startingLocation))
+#     print("Bishop:", phoneBoard.getLocationValue(startingLocation), bishop.calculateAvailableMoves(phoneBoard, startingLocation))
+
+print("Count of valid King numbers: ", king.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
+print("Count of valid Queen numbers: ", queen.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
+print("Count of valid Rook numbers: ", rook.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
+print("Count of valid Bishop numbers: ", bishop.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
+print("Count of valid Knight numbers: ", knight.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
+print("Count of valid Pawn numbers: ", pawn.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
