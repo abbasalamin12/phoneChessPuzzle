@@ -76,13 +76,13 @@ class ChessPiece:
 
     def calculateAvailableMoves(self, board, startingPos):
         """ Calculates possible moves that can be made for a given piece, and starting position, and returns a set of possiblities """
-        availableSpaces = []
+        availableSpaces = set()
 
         for move in self.calculateStraightSpaces(board, startingPos):
-            availableSpaces.append(move)
+            availableSpaces.add(move)
 
         for move in self.calculateDiagonalSpaces(board, startingPos):
-            availableSpaces.append(move)
+            availableSpaces.add(move)
 
         return availableSpaces
 
@@ -322,6 +322,8 @@ class Board:
             viewableBoard += "\n"
         return viewableBoard
 
+
+# creates the different chess piece instances
 king = King("King")
 queen = Queen("Queen")
 bishop = Bishop("Bishop")
@@ -330,6 +332,7 @@ knight = Knight("Knight")
 pawn = Pawn("Pawn")
 
 
+# sets up the chess board
 phoneBoard = Board(3, 4)
 
 phoneBoard.setRow(0, [1, 2, 3])
@@ -341,35 +344,12 @@ phoneBoard.setInvalidSquare((2, 0)) # sets the '#' square as invalid
 print(phoneBoard)
 
 
-# print("Available King moves from 5 square: ")
-# print(king.calculateAvailableMoves(phoneBoard, (1,2)))
+if __name__ == '__main__': # if running this file directly
+    validStartingLocations = [(1,3), (2,3), (0,2), (1,2), (2,2), (0,1), (0,2), (2,1)] # numbers 2-9 inclusive on the phone board, as starting locations to create phone numbers for
 
-# print("Available Queen moves from 5 square: ")
-# print(queen.calculateAvailableMoves(phoneBoard, (1,2)))
-
-# print("Available Bishop moves from 3 square: ")
-# print(bishop.calculateAvailableMoves(phoneBoard, (2,3)))
-
-# print("Available Rook moves from 5 square: ")
-# print(rook.calculateAvailableMoves(phoneBoard, (1,2)))
-
-# print("Available Knight moves from 3 square: ")
-# print(knight.calculateAvailableMoves(phoneBoard, (0,1)))
-
-# print("Available Pawn moves from 0 square: ")
-# print(pawn.calculateAvailableMoves(phoneBoard, (1,0)))
-
-
-
-validStartingLocations = [(1,3), (2,3), (0,2), (1,2), (2,2), (0,1), (0,2), (2,1)] # numbers 2-9 inclusive on the phone board
-
-# for startingLocation in validStartingLocations:
-#     print("Rook:", phoneBoard.getLocationValue(startingLocation), rook.calculateAvailableMoves(phoneBoard, startingLocation))
-#     print("Bishop:", phoneBoard.getLocationValue(startingLocation), bishop.calculateAvailableMoves(phoneBoard, startingLocation))
-
-print("Count of valid King numbers: ", king.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
-print("Count of valid Queen numbers: ", queen.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
-print("Count of valid Rook numbers: ", rook.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
-print("Count of valid Bishop numbers: ", bishop.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
-print("Count of valid Knight numbers: ", knight.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
-print("Count of valid Pawn numbers: ", pawn.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
+    print("Count of valid King numbers: ", king.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
+    print("Count of valid Queen numbers: ", queen.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
+    print("Count of valid Rook numbers: ", rook.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
+    print("Count of valid Bishop numbers: ", bishop.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
+    print("Count of valid Knight numbers: ", knight.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
+    print("Count of valid Pawn numbers: ", pawn.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
