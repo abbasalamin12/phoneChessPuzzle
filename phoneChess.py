@@ -282,6 +282,11 @@ class Board:
     
     def getRange(self, movementRange, currentPos, direction):
         """ Returns a movement range taking the board's boundaries, and the piece's movement into consideration """
+        if(movementRange<0):
+            raise IndexError("The range must be non-negative")
+        if(direction != "horizontal" and direction != "vertical"):
+            raise ValueError("The direction must be either horizontal, or vertical")
+
         if(movementRange == inf):
             if(direction=="vertical"):
                 return range(0, self.verticalSize)
