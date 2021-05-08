@@ -350,7 +350,7 @@ print(phoneBoard)
 
 
 if __name__ == '__main__': # if running this file directly
-    validStartingLocations = [(1,3), (2,3), (0,2), (1,2), (2,2), (0,1), (0,2), (2,1)] # numbers 2-9 inclusive on the phone board, as starting locations to create phone numbers for
+    validStartingLocations = [(1,3), (2,3), (0,2), (1,2), (2,2), (0,1), (1,1), (2,1)] # numbers 2-9 inclusive on the phone board, as starting locations to create phone numbers for
 
     print("Count of valid King numbers: ", king.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
     print("Count of valid Queen numbers: ", queen.calculateAllValidNumbers(phoneBoard, validStartingLocations)[0])
